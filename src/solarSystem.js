@@ -334,7 +334,16 @@ export function startSolarSystem(root) {
   // ---------- camera ----------
   const tPos = V(), tLook = V(), camPos = V(), camLook = V(), fwd = V(), tmp = V()
   const aimer = new THREE.Object3D()
-  function introCam() { tPos.copy(LAUNCH).add(V(-0.8, 0.7, -3.2)); tLook.copy(LAUNCH).add(V(-0.75, 0.05, 0)) }
+  // Layouts, matching the CSS media queries: stacked = phone portrait, short = phone landscape
+  const stacked = () => innerWidth <= 760
+  const short = () => !stacked() && innerHeight <= 500
+  const portrait = () => innerWidth < innerHeight
+  function introCam() {
+    // Narrow screens see less sideways, so back off and centre the ship (a little high, Explore goes below it)
+    const f = Math.pow(Math.max(1, 1.2 / camera.aspect), 0.7)
+    tPos.copy(LAUNCH).add(V(-0.8, 0.7 * f, -3.2 * f))
+    tLook.copy(LAUNCH).add(portrait() ? V(0, -0.25 * f, 0) : V(-0.75, 0.05, 0))
+  }
   function dockCam(i) {
     const b = body(i)
     if (i === STATION) { tPos.copy(b.c).addScaledVector(b.sw, 0.8).addScaledVector(b.tan, 4.2).addScaledVector(UP, 2.6) }
@@ -355,7 +364,7 @@ export function startSolarSystem(root) {
   const toPx = (p) => [(p.x * 0.5 + 0.5) * innerWidth, (-p.y * 0.5 + 0.5) * innerHeight]
 
   // ---------- loop ----------
-  let T = 0, last = performance.now(), raf = 0
+  let T = 0, last = performance.now(), raf = 0, viewShift = 0
   function frame(now) {
     const dt = Math.min((now - last) / 1000, 0.05); last = now; T += dt
     const OT = reduce ? 0 : T
@@ -429,6 +438,10 @@ export function startSolarSystem(root) {
     camPos.lerp(tPos, k); camLook.lerp(tLook, k)
     camera.position.copy(camPos); camera.lookAt(camLook)
     key.position.copy(camPos).add(V(0, 2, 0)); key.target.position.copy(camLook)
+    const shiftTo = nav.docked && short() ? -innerWidth * 0.22 : 0
+    viewShift += (shiftTo - viewShift) * (reduce ? 1 : Math.min(1, dt * 3))
+    if (Math.abs(viewShift) < 0.5) camera.clearViewOffset()
+    else camera.setViewOffset(innerWidth, innerHeight, viewShift, 0, innerWidth, innerHeight)
     const fov = 40 + speed * 22
     camera.fov += (fov - camera.fov) * Math.min(1, dt * 4); camera.updateProjectionMatrix()
 
@@ -447,7 +460,9 @@ export function startSolarSystem(root) {
     // Explore button sits beside the ship in the intro
     if (nav.mode === 'intro') {
       proj(ship, tmp); const [sx, sy] = toPx(tmp)
-      const cw = control.offsetWidth, ch = control.offsetHeight, narrow = innerWidth < 760
+      const narrow = stacked() || portrait()
+      control.classList.toggle('centered', narrow) // sits under the ship rather than beside it
+      const cw = control.offsetWidth, ch = control.offsetHeight
       let lx = narrow ? sx - cw / 2 : sx + Math.min(360, innerWidth * 0.24), ly = narrow ? sy + innerHeight * 0.2 : sy - ch / 2
       lx = Math.max(16, Math.min(innerWidth - cw - 16, lx)); ly = Math.max(80, Math.min(innerHeight - ch - 24, ly))
       control.style.left = lx.toFixed(0) + 'px'; control.style.top = ly.toFixed(0) + 'px'
@@ -455,7 +470,7 @@ export function startSolarSystem(root) {
 
     // the active board hangs off its flag
     const board = nav.docked ? boards[nav.docked - 1] : null
-    if (board && innerWidth >= 760) {
+    if (board && !stacked() && !short()) {
       proj(body(nav.docked).tip, tmp); const [fx, fy] = toPx(tmp)
       const bw = board.offsetWidth, bh = board.offsetHeight, gap = 56
       const left = fx > innerWidth * 0.5 ? fx - bw - gap : fx + gap
@@ -486,7 +501,7 @@ export function startSolarSystem(root) {
     // Put the DOM back in its intro state so a remount (StrictMode, hot reload) starts clean
     showBoard(0); tether.setAttribute('opacity', '0')
     control.classList.remove('flying'); control.style.left = control.style.top = ''
-    boost.classList.remove('held', 'busy'); boost.removeAttribute('aria-disabled'); boost.textContent = 'Explore'
+    boost.classList.remove('held', 'busy'); control.classList.remove('centered'); boost.removeAttribute('aria-disabled'); boost.textContent = 'Explore'
     hint.textContent = 'Fly through my work, one planet at a time.'; live.textContent = ''
     stopsNav.hidden = true
   }
