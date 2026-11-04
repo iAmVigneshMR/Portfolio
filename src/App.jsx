@@ -1,223 +1,157 @@
-import { lazy, Suspense, useEffect, useState } from 'react'
-import { education, experience, profile, skills, stats } from './data'
+import { useEffect, useRef } from 'react'
+import { startSolarSystem } from './solarSystem'
+import { education, experience, profile, skills, stack, stats } from './data'
 
-const Scene = lazy(() => import('./components/Scene'))
+// Route order: the board for stop N is the Nth .board in the DOM
+const STOPS = [
+  { go: 1, label: 'About', color: '--p-about' },
+  { go: 2, label: 'Screen', color: '--p-screen' },
+  { go: 3, label: 'Server', color: '--p-server' },
+  { go: 4, label: 'Data', color: '--p-data' },
+  { go: 5, label: 'Experience', color: '--p-exp' },
+  { go: 6, label: 'Contact', color: '--p-contact' },
+]
 
-const nav = ['about', 'skills', 'experience', 'education', 'contact']
+const accent = (name) => ({ '--c': `var(${name})` })
 
-function useReveal() {
-  useEffect(() => {
-    const io = new IntersectionObserver(
-      (entries) => entries.forEach((e) => e.isIntersecting && e.target.classList.add('visible')),
-      { threshold: 0.12 },
-    )
-    document.querySelectorAll('.reveal').forEach((el) => io.observe(el))
-    return () => io.disconnect()
-  }, [])
-}
-
-function Header() {
-  const [open, setOpen] = useState(false)
-  const [scrolled, setScrolled] = useState(false)
-
-  useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 20)
-    window.addEventListener('scroll', onScroll, { passive: true })
-    return () => window.removeEventListener('scroll', onScroll)
-  }, [])
-
+function Chips({ items }) {
   return (
-    <header className={`header ${scrolled ? 'scrolled' : ''}`}>
-      <a href="#top" className="logo">
-        VMR<span>.</span>
-      </a>
-      <button className="menu-btn" aria-label="Toggle menu" onClick={() => setOpen(!open)}>
-        <span /><span /><span />
-      </button>
-      <nav className={open ? 'open' : ''}>
-        {nav.map((id) => (
-          <a key={id} href={`#${id}`} onClick={() => setOpen(false)}>
-            {id}
-          </a>
-        ))}
-      </nav>
-    </header>
-  )
-}
-
-function Hero() {
-  return (
-    <section id="top" className="hero">
-      <div className="hero-text">
-        <p className="mono eyebrow">Hi, my name is</p>
-        <h1>{profile.name}</h1>
-        <h2>
-          <span className="gradient">{profile.title}</span> crafting fast, scalable web experiences.
-        </h2>
-        <p className="lead">
-          5+ years building React, Next.js, Vue.js and Node.js applications — from land-tax payment
-          platforms processing $5M+ a year to analytics products serving thousands of users.
-        </p>
-        <div className="cta">
-          <a className="btn primary" href="#experience">View my work</a>
-          <a className="btn ghost" href={`mailto:${profile.email}`}>Get in touch</a>
-        </div>
-        <div className="socials">
-          <a href={profile.github} target="_blank" rel="noreferrer">GitHub</a>
-          <a href={profile.linkedin} target="_blank" rel="noreferrer">LinkedIn</a>
-          <a href={`mailto:${profile.email}`}>Email</a>
-        </div>
-      </div>
-      <a href="#about" className="scroll-hint" aria-label="Scroll down">
-        <span />
-      </a>
-    </section>
-  )
-}
-
-function SectionTitle({ index, children }) {
-  return (
-    <h2 className="section-title reveal">
-      <span className="mono">0{index}.</span> {children}
-    </h2>
-  )
-}
-
-function About() {
-  return (
-    <section id="about">
-      <SectionTitle index={1}>About Me</SectionTitle>
-      <div className="about-grid">
-        <p className="card reveal">{profile.summary}</p>
-        <div className="stats">
-          {stats.map((s) => (
-            <div key={s.label} className="card stat reveal">
-              <strong className="gradient">{s.value}</strong>
-              <span>{s.label}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  )
-}
-
-function Skills() {
-  return (
-    <section id="skills">
-      <SectionTitle index={2}>Skills</SectionTitle>
-      <div className="skills-grid">
-        {Object.entries(skills).map(([group, list]) => (
-          <div key={group} className="card reveal">
-            <h3>{group}</h3>
-            <ul className="chips">
-              {list.map((s) => (
-                <li key={s}>{s}</li>
-              ))}
-            </ul>
-          </div>
-        ))}
-      </div>
-    </section>
-  )
-}
-
-function Experience() {
-  const [active, setActive] = useState(0)
-  const job = experience[active]
-  return (
-    <section id="experience">
-      <SectionTitle index={3}>Experience</SectionTitle>
-      <div className="exp reveal">
-        <div className="exp-tabs" role="tablist">
-          {experience.map((e, i) => (
-            <button
-              key={e.company}
-              role="tab"
-              aria-selected={i === active}
-              className={i === active ? 'active' : ''}
-              onClick={() => setActive(i)}
-            >
-              {e.company}
-            </button>
-          ))}
-        </div>
-        <div className="card exp-panel" key={job.company}>
-          <h3>
-            {job.role} <span className="gradient">@ {job.company}</span>
-          </h3>
-          <p className="mono period">{job.period}</p>
-          <ul className="points">
-            {job.points.map((p) => (
-              <li key={p}>{p}</li>
-            ))}
-          </ul>
-          <ul className="chips small">
-            {job.tags.map((t) => (
-              <li key={t}>{t}</li>
-            ))}
-          </ul>
-        </div>
-      </div>
-    </section>
-  )
-}
-
-function Education() {
-  return (
-    <section id="education">
-      <SectionTitle index={4}>Education &amp; Training</SectionTitle>
-      <ol className="timeline">
-        {education.map((e) => (
-          <li key={e.title} className="card reveal">
-            <h3>{e.title}</h3>
-            <p>{e.place}</p>
-            {e.period && <p className="mono period">{e.period}</p>}
-          </li>
-        ))}
-      </ol>
-    </section>
-  )
-}
-
-function Contact() {
-  return (
-    <section id="contact" className="contact">
-      <p className="mono eyebrow reveal">05. What's next?</p>
-      <h2 className="reveal">Let's build something together.</h2>
-      <p className="lead reveal">
-        I'm open to new opportunities and collaborations. Whether you have a question or just want
-        to say hi, my inbox is always open.
-      </p>
-      <div className="contact-links reveal">
-        <a className="btn primary" href={`mailto:${profile.email}`}>{profile.email}</a>
-        <a className="btn ghost" href={`tel:${profile.phone.replace(/\s/g, '')}`}>{profile.phone}</a>
-      </div>
-    </section>
+    <ul className="chips">
+      {items.map((t) => (
+        <li key={t}>{t}</li>
+      ))}
+    </ul>
   )
 }
 
 export default function App() {
-  useReveal()
+  const root = useRef(null)
+
+  useEffect(() => startSolarSystem(root.current), [])
+
   return (
-    <>
-      <div className="canvas-wrap" aria-hidden="true">
-        <Suspense fallback={null}>
-          <Scene />
-        </Suspense>
+    <div ref={root}>
+      <div id="labels" aria-hidden="true" />
+      <svg id="tether" aria-hidden="true">
+        <line id="tetherLine" x1="0" y1="0" x2="0" y2="0" opacity="0" />
+      </svg>
+
+      <h1 className="brand">
+        <span className="name">{profile.name}</span>
+        <span className="role">Full stack developer</span>
+      </h1>
+
+      <nav className="stops" id="stops" aria-label="Destinations" hidden>
+        {STOPS.map((s) => (
+          <button key={s.go} data-go={s.go} style={accent(s.color)}>
+            {s.label}
+          </button>
+        ))}
+      </nav>
+
+      <div className="control" id="control">
+        <button className="boost" id="boost">Explore</button>
+        <p className="hint" id="hint">Fly through my work, one planet at a time.</p>
       </div>
-      <Header />
-      <main>
-        <Hero />
-        <About />
-        <Skills />
-        <Experience />
-        <Education />
-        <Contact />
-      </main>
-      <footer>
-        <p className="mono">Designed &amp; built by {profile.name} · React + Three.js</p>
-      </footer>
-    </>
+      <p className="sr" id="live" aria-live="polite" />
+
+      <article className="board wide" data-stop="1" style={accent('--p-about')}>
+        <h2>About me</h2>
+        <dl className="stats">
+          {stats.map((s) => (
+            <div key={s.label}>
+              <dt>{s.label}</dt>
+              <dd>{s.value}</dd>
+            </div>
+          ))}
+        </dl>
+        <p>{profile.summary}</p>
+        <h3 className="sub">Soft skills</h3>
+        <Chips items={skills['Soft Skills']} />
+      </article>
+
+      <article className="board" data-stop="2" style={accent('--p-screen')}>
+        <h2>The screen</h2>
+        <p>
+          At Skillrev I'm moving legacy apps to React and Next.js, which has lifted Core Web Vitals
+          by 35% across more than ten core modules.
+        </p>
+        <p>
+          Before that I built the Vue and Vuetify front end of a US land-tax payment product,
+          raising engagement by 25%, and map-heavy analytics dashboards with Mapbox and Apex Charts.
+        </p>
+        <Chips items={stack.screen} />
+      </article>
+
+      <article className="board" data-stop="3" style={accent('--p-server')}>
+        <h2>The server</h2>
+        <p>
+          I design REST and GraphQL APIs in Node.js and Express. My latest work cut API response
+          time by 120 ms.
+        </p>
+        <p>
+          The land-tax platform I led processes over $5M a year at 99.9% uptime. I also keep CI/CD
+          pipelines in shape: release turnaround is down 40% on Azure DevOps.
+        </p>
+        <Chips items={stack.server} />
+      </article>
+
+      <article className="board" data-stop="4" style={accent('--p-data')}>
+        <h2>The data</h2>
+        <p>
+          Schemas shaped around how the app actually reads, and queries tuned until they're fast. On
+          an SQL system serving 1,000+ daily users, my query work made retrieval 35% faster.
+        </p>
+        <Chips items={stack.data} />
+      </article>
+
+      <article className="board wide" data-stop="5" style={accent('--p-exp')}>
+        <h2>Where I've worked</h2>
+        <ol>
+          {experience.map((job) => (
+            <li key={job.company}>
+              <h3>{job.company}</h3>
+              <p className="muted">
+                {job.role}, {job.period}
+              </p>
+              <ul className="points">
+                {job.points.map((p) => (
+                  <li key={p}>{p}</li>
+                ))}
+              </ul>
+              <Chips items={job.tags} />
+            </li>
+          ))}
+        </ol>
+        <h3 className="sub">Education</h3>
+        <ol className="edu">
+          {education.map((e) => (
+            <li key={e.title}>
+              <strong>{e.title}</strong>
+              <span className="muted">
+                {e.place}
+                {e.period && `, ${e.period}`}
+              </span>
+            </li>
+          ))}
+        </ol>
+      </article>
+
+      <article className="board" data-stop="6" style={accent('--p-contact')}>
+        <p className="end-note">Well, here we are at the last station. Thanks for flying with me.</p>
+        <h2>Have something to build?</h2>
+        <p>I take on full stack work, from the first screen to the production database.</p>
+        <a className="email" href={`mailto:${profile.email}`}>{profile.email}</a>
+        <p>
+          <a className="phone" href={`tel:${profile.phone.replace(/\s/g, '')}`}>{profile.phone}</a>
+          <span className="muted"> · {profile.location}</span>
+        </p>
+        <p className="links">
+          <a href={profile.github}>GitHub</a>
+          <a href={profile.linkedin}>LinkedIn</a>
+          <a href="/Vignesh_M_R_-_Resume.pdf">Résumé</a>
+        </p>
+      </article>
+    </div>
   )
 }

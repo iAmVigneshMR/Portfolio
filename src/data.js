@@ -34,10 +34,18 @@ export const skills = {
   ],
 }
 
-// Floating labels in the hero 3D scene
-export const orbitSkills = [
-  'React', 'Next.js', 'Vue.js', 'Node.js', 'GraphQL', 'MongoDB', 'Express', 'Redux', 'Azure', 'Docker', 'Mapbox', 'Tailwind',
-]
+// Every technology and tool above, grouped by the planet that shows it
+export const stack = {
+  screen: [
+    'HTML5', 'CSS3', 'JavaScript (ES6)', 'React.js', 'Next.js', 'Redux', 'Vue.js (Vue2)', 'Vuex',
+    'Vuetify', 'Material UI', 'Tailwind CSS', 'Bootstrap', 'SASS', 'Mapbox', 'Google Maps', 'Vite', 'Webpack',
+  ],
+  server: [
+    'Node.js', 'Express.js', 'GraphQL', 'Azure', 'Docker', 'Vercel', 'Git', 'Postman', 'ESLint',
+    'Prettier', 'Yarn', 'npm', 'Claude', 'Cursor', 'GitHub Copilot', 'Asana', 'Notion',
+  ],
+  data: ['MongoDB', 'Mongoose', 'MongoDB Compass', 'Studio 3T', 'SQL'],
+}
 
 export const experience = [
   {

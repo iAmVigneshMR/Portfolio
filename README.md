@@ -1,6 +1,6 @@
 # Vignesh M R — Portfolio
 
-Personal portfolio built with React, Vite and Three.js (via `@react-three/fiber` and `@react-three/drei`).
+Personal portfolio built with React, Vite and Three.js.
 
 ## Scripts
 
@@ -13,7 +13,12 @@ npm run preview  # serve the production build
 
 ## Structure
 
-- `src/data.js` — all resume content (profile, skills, experience, education). Edit this to update the site.
-- `src/components/Scene.jsx` — the 3D background: distorted core, wireframe shell, orbiting skill chips, starfield. Reacts to pointer and scroll.
-- `src/App.jsx` — page sections.
-- `src/index.css` — styles.
+- `src/data.js` — résumé content: profile, stats, skills, the per-planet `stack` lists, experience and education. Edit this to update the site.
+- `src/App.jsx` — page markup: name, destination buttons, the Boost control, and one board per stop (About, Screen, Server, Data, Experience, Contact). The short Screen/Server/Data intros live here.
+- `src/solarSystem.js` — the three.js scene and flight logic: planets, moons, contact station, ship, camera, and positioning the boards next to each planet's flag. Started from `App` and cleaned up on unmount.
+- `src/index.css` — styles and the planet colour palette (`--p-*` variables, also read by the 3D scene).
+- `public/Vignesh_M_R_-_Resume.pdf` — résumé linked from the Contact board.
+
+## Controls
+
+Click **Explore**, then hold **Boost** (or Space) to fly, or tap it to jump to the next stop. The buttons top right fly straight to a section.
