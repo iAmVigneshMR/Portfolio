@@ -237,6 +237,12 @@ button,
   padding: 1.1rem 3.4rem;
 }
 
+.boost.busy {
+  cursor: progress;
+  opacity: 0.6;
+  box-shadow: none;
+}
+
 .boost.held {
   background: var(--p-server);
   transform: scale(0.97);

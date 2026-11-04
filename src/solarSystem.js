@@ -259,26 +259,31 @@ export function startSolarSystem(root) {
     hint.textContent = 'Hold Boost to fly. Tap it to jump to the next planet.'
     live.textContent = 'Ready for launch. Next stop: ' + STOP_NAMES[1] + '.'
   }
+  // While the ship is on its way to a stop, Boost is locked until it docks
+  function setTransit(on) {
+    boost.classList.toggle('busy', on); boost.setAttribute('aria-disabled', on ? 'true' : 'false')
+    if (on) boost.textContent = 'Flying…'
+  }
   function press() {
-    if (nav.mode !== 'fly' || nav.pressing) return
+    if (nav.mode !== 'fly' || nav.pressing || nav.target !== null) return
     nav.pressing = true; nav.t0 = performance.now(); boost.classList.add('held'); boost.textContent = 'Boost'; undock()
   }
   function release() {
     if (!nav.pressing) return
     nav.pressing = false; boost.classList.remove('held')
     const tap = performance.now() - nav.t0 < 220
-    nav.target = tap && nav.target !== null ? nav.target + 1 : Math.floor(nav.s + 1e-6) + 1
-    if (reduce && tap) arrive()
+    nav.target = Math.floor(nav.s + 1e-6) + 1
+    if (reduce && tap) arrive(); else setTransit(true)
   }
   function flyToStop(i) {
     if (nav.mode === 'intro') explore()
     if (nav.docked === i) return
     let k = Math.floor(nav.s + 1e-6) + 1; while (idx(k) !== i) k++
-    undock(); nav.target = k; if (reduce) arrive()
+    undock(); nav.target = k; if (reduce) arrive(); else setTransit(true)
   }
   function undock() { if (nav.docked) { nav.docked = 0; showBoard(0); boost.textContent = 'Boost' } }
   function arrive() {
-    nav.s = nav.target; nav.v = 0; nav.target = null
+    nav.s = nav.target; nav.v = 0; nav.target = null; setTransit(false)
     const i = idx(nav.s); nav.docked = i; showBoard(i)
     if (i === STATION) stationFlash.flash = 1; else planets[i - 1].flash = 1
     if (i === STATION) {
@@ -481,7 +486,7 @@ export function startSolarSystem(root) {
     // Put the DOM back in its intro state so a remount (StrictMode, hot reload) starts clean
     showBoard(0); tether.setAttribute('opacity', '0')
     control.classList.remove('flying'); control.style.left = control.style.top = ''
-    boost.classList.remove('held'); boost.textContent = 'Explore'
+    boost.classList.remove('held', 'busy'); boost.removeAttribute('aria-disabled'); boost.textContent = 'Explore'
     hint.textContent = 'Fly through my work, one planet at a time.'; live.textContent = ''
     stopsNav.hidden = true
   }
